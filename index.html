@@ -1,0 +1,243 @@
+<html>
+<head>
+	<title>LightHouse</title>
+	<link href="css/bootstrap.css" rel="stylesheet" media="screen">
+	<script src="js/ag-grid.min.js"></script>
+	<script src="js/ace-min/ace.js"></script>
+	<script src="js/ace-min/clickhouse_highlight_rules.js"></script>
+	<script src="js/ace-min/ch_completions_help.js"></script>
+	<script src="js/ace-min/ext-language_tools.js"></script>
+	<script type="text/javascript" src="jquery.js"></script>
+	<script type="text/javascript" src="js/bootstrap.js"></script>
+	<script type="text/javascript" src="app.js?v8"></script>
+	<style type="text/css">
+	body {
+		overflow: hidden;
+	}
+
+	#query {
+		width: 100%;
+		height: 60px;
+	}
+
+	th, td {
+		padding: 4px;
+		vertical-align: top;
+	}
+
+	.border {
+		border: 1px gray solid;
+	}
+
+	.border-bottom {
+		border-bottom: 1px gray solid;
+	}
+
+	#query-result, #content-query-result {
+		height: 100%;
+		width: calc(100vw - 220px);
+		overflow: auto;
+	}
+
+	#params, #content-params {
+		margin-left: 10px;
+		color: gray;
+		font-family: Menlo, monospace;
+		font-size: 12px;
+	}
+
+	#tables {
+		width: 200px;
+		overflow: scroll;
+		font-size: 0.85em;
+	}
+
+	#database {
+		max-width: 180px;
+		margin: 10px;
+	}
+
+	.table_name {
+		white-space: nowrap;
+		cursor: default;
+	}
+
+	#query-result td, #query-result th, #content-query-result td, #content-query-result th {
+		font-size: 0.8em;
+	}
+
+	#structure {
+		overflow: auto;
+		max-width: calc(100vw - 250px);
+		max-height: calc(100vh - 100px);
+	}
+
+	#info {
+		padding-left: 10px;
+		font-size: 0.85em;
+	}
+
+	#search {
+		width: 100%;
+	}
+
+	.status {
+		background-color: #f5f5f5;
+	}
+
+	.full {
+		height: calc(100vh - 50px);
+	}
+
+	.select-mini {
+		font-size: 11px;
+		height: 20px;
+		width: 100px;
+	}
+
+	#smyles_editor {
+		height: 300px;
+	}
+
+	#smyles_editor_wrap {
+		background-color: #eceaea;
+		border-bottom: 1px solid #888888;
+	}
+
+	#smyles_dragbar {
+		background-color: #888888;
+		width: 100%;
+		height: 2px;
+		cursor: row-resize;
+		opacity: 1;
+	}
+
+	#tables > .nav > li > a {
+		display: inline-block !important;
+		min-width: 155px;
+	}
+
+	.btn-circle {
+		width: 20px;
+		height: 20px;
+		text-align: center;
+		padding: 4px 0;
+		font-size: 12px;
+		line-height: 0.9;
+		border-radius: 10px;
+	}
+	</style>
+</head>
+<body onbeforeunload="saveLastQuery()">
+<div style="width: 200px; max-width: 200px; height: 100vh; padding: 0px; margin: 0px; position: absolute; top: 0px; left: 0px; flex-direction: column; display: flex;">
+	<div>
+		<select id="database" onchange="selectDatabase(this.value)"></select>
+	</div>
+	<div>
+		<input type="text" id="search" placeholder="Filter" class="span2 search-query" />
+	</div>
+
+	<div id="tables">
+
+	</div>
+
+	<div class="border" style="border-bottom: 0px; position: relative; bottom: 0px; margin-top: auto; padding: 3px;">
+		<b class="muted">Table info</b>
+		<div id="info">
+
+		</div>
+	</div>
+</div>
+
+<div style="padding-left: 210px;">
+	<div>
+		<ul class="nav nav-pills" style="margin: 0px;">
+			<li id="section-structure">
+				<a href="#" onclick="return selectSection('structure');">Structure</a>
+			</li>
+			<li id="section-content" class="active">
+				<a href="#" onclick="return selectSection('content');">Content</a>
+			</li>
+			<li id="section-query">
+				<a href="#" onclick="return selectSection('query');">Query</a>
+			</li>
+		</ul>
+	</div>
+
+	<div class="full" style="display: none;" id="structure-view">
+		<pre id="structure"></pre>
+	</div>
+
+	<table class="full" id="content-query-view">
+		<tr height="30"><td>
+			<span id="content-loading" style="visibility: hidden;" class="pull-left"><img src="img/loading.svg" width="30" height="30" /></span>
+			<div class="filters pull-left" style="margin-top: 5px;" id="content-filters">
+
+			</div>
+			
+			<button id="filter-btn" class="btn btn-mini btn-primary pull-right" onclick="applyFilters()" style="margin: 3px;">
+				<b>Filter</b>
+			</button>
+			<button id="filter-btn" class="btn btn-mini btn-primary pull-right" onclick="applyFilters(true)" style="margin: 3px;">
+				<b>Filter &amp; sort</b>
+			</button>
+			<button class="btn btn-mini btn-info pull-right" onclick="content_grid_options.columnApi.autoSizeColumns(content_grid_options.columnApi.getAllColumns())" style="margin: 3px;">
+				<b>Auto-size</b>
+			</button>
+			<button class="btn btn-mini btn-info pull-right" onclick="content_grid_options.api.exportDataAsCsv({});" style="margin: 3px;">
+				<b>CSV</b>
+			</button>
+			<input id="content-params" class="pull-right" style="display: none; margin: 7px;" type="text" readonly style="max-width: 250px;" />
+		</td></tr>
+		<tr><td>
+			<div id="content-query-result" class="ag-theme-fresh">
+				&nbsp;
+			</div>
+		</td></tr>
+		<tr height="40"><td class="status" style="border-bottom: 0px;">
+			<div>
+				Query execution time: <span id="content-query-ms">0</span> ms;
+				Affected rows: <span id="content-affected-rows">0</span>; 
+				Result rows: <span id="content-result-rows">0</span>
+			</div>
+		</td></tr>
+	</table>
+
+	<table class="full" style="display: none;" id="query-view">
+		<tr height="95"><td>
+			<div id="smyles_editor_wrap" style="margin-bottom: 0px;">
+				<div style="height: 250px; width: 100%; resize: height;" id="query"></div>
+			</div>
+			<div id="smyles_dragbar"></div>
+			<div>
+				<span id="executing" style="visibility: hidden;"><img src="img/loading.svg" width="30" height="30" /></span>
+				<span id="params" style="display: none;"></span>
+				<button id="execute-btn" class="btn btn-mini btn-primary pull-right" onclick="submitQuery()" style="margin: 3px;">
+					<b>Execute</b>
+				</button>
+				<button class="btn btn-mini btn-info pull-right" onclick="grid_options.columnApi.autoSizeColumns(grid_options.columnApi.getAllColumns())" style="margin: 3px;">
+					<b>Auto-size</b>
+				</button>
+				<button class="btn btn-mini btn-info pull-right" onclick="grid_options.api.exportDataAsCsv({});" style="margin: 3px;">
+					<b>CSV</b>
+				</button>
+			</div>
+		</td></tr>
+		<tr><td>
+			<div id="query-result" class="ag-theme-fresh">
+				&nbsp;
+			</div>
+		</td></tr>
+		<tr height="40"><td class="status" style="border-bottom: 0px;">
+			<div>
+				Query execution time: <span id="query-ms">0</span> ms;
+				Affected rows: <span id="affected-rows">0</span>; 
+				Result rows: <span id="result-rows">0</span>
+			</div>
+		</td></tr>
+	</table>
+</div>
+
+
+</body>
+</html>
