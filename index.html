@@ -52,7 +52,7 @@
 		font-size: 0.85em;
 	}
 
-	#database {
+	.selector-left {
 		max-width: 180px;
 		margin: 10px;
 	}
@@ -126,12 +126,16 @@
 		line-height: 0.9;
 		border-radius: 10px;
 	}
+
 	</style>
 </head>
 <body onbeforeunload="saveLastQuery()">
 <div style="width: 200px; max-width: 200px; height: 100vh; padding: 0px; margin: 0px; position: absolute; top: 0px; left: 0px; flex-direction: column; display: flex;">
 	<div>
-		<select id="database" onchange="selectDatabase(this.value)"></select>
+		<select class="selector-left" id="hostname" onchange="selectHostName(this.value)"></select>
+	</div>
+	<div>
+		<select class="selector-left" id="database" onchange="selectDatabase(this.value)"></select>
 	</div>
 	<div>
 		<input type="text" id="search" placeholder="Filter" class="span2 search-query" />
