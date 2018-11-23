@@ -25,14 +25,23 @@ $(function() {
   if (window.location.hash) {
     var external_where = parseHash();
   } else {
-    db_host = prompt('Host:', 'http://127.0.0.1:8123/');
+    if (!db_host) {
+        db_host = localGetKey('lighthouse_host'); //get
+        if (!db_host) {
+            db_host = prompt('Host:', 'http://127.0.0.1:8123/');
+        }
+    }
     if (!db_host) {
       alert('You must enter host name. The interface will not work without it. Reload page and try again.');
       return;
     }
     window.location.hash = db_host;
   }
-
+  if (db_host) {
+      addHost(db_host);
+      localSetKey('lighthouse_host', db_host); //set
+      updateHostsSelection();
+  }
   registerAltKeys();
 
   $('#query').keydown(function(ev) {
@@ -534,7 +543,7 @@ function query(key, str, callback) {
               res = {data: {err: e}};
             }
           }
-          
+
           var fields = [];
           var types = {};
           var statistics = res.statistics || {};
@@ -656,7 +665,7 @@ function reloadDatabases() {
         default_database = saved_database;
       }
     }
-    
+
     var lst = ['<option value="">Select database...</option>'];
     for (var i = 0; i < data.rows.length; i++) {
       var name = data.rows[i][0];
@@ -666,6 +675,44 @@ function reloadDatabases() {
     $('#database').html(lst.join("\n"));
     selectDatabase(default_database, true);
   });
+}
+
+function getHosts() {
+  var hosts = localGetKey('lighhouse_hosts');
+  if (hosts) {
+    hosts = JSON.parse(hosts);
+  } else {
+    hosts = {};
+  }
+  return hosts;
+}
+
+function updateHostsSelection() {
+  var hosts = getHosts();
+  var lst = ['<option value="">Select hostname...</option>'];
+  $.each(hosts, function(key, name) {
+      lst.push('<option value="' + htmlspecialchars(name) + '"' + (name == db_host ? ' selected="selected"' : '') + '>' + htmlspecialchars(name) + '</option>');
+  });
+
+  $('#hostname').html(lst.join("\n"));
+}
+
+function selectHostName(host) {
+    addHost(host);
+    localSetKey('lighthouse_host', host); //set
+    window.location.hash = host;
+}
+
+function addHost(host) {
+  if (host == "") {
+    return
+  }
+  var hosts = getHosts();
+  if (!hosts) {
+    hosts = {}
+  }
+  hosts[host] = host;
+  localSetKey('lighhouse_hosts', JSON.stringify(hosts));
 }
 
 function filterTables() {
