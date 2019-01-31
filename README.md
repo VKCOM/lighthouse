@@ -3,6 +3,7 @@ LightHouse is a lightweight GUI interface for ClickHouse. Do not confuse it with
 
 # Usage
 Just clone this repository and use index.html in your browser.
+If you need to specify username (e.g. XXX), then add "/?user=XXX" to your URL, e.g. "http://127.0.0.1:8123/?user=XXX".
 
 # Features
 You can do the following using LightHouse:
