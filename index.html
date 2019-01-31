@@ -129,6 +129,12 @@
 	</style>
 </head>
 <body onbeforeunload="saveLastQuery()">
+<div id="password_prompt" style="position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; text-align: center; vertical-align: middle; z-index: 1000; background: white; padding: 0; padding-top: 45vh; margin: 0px; border: 0px; display: none;">
+	<form onsubmit="window.host_password = document.getElementById('host_password').value; init(); return false;">
+	<div>Enter host password: <input id="host_password" type="password" value="" /></div>
+	<div><button type="submit">Connect</button></div>
+	</form>
+</div>
 <div style="width: 200px; max-width: 200px; height: 100vh; padding: 0px; margin: 0px; position: absolute; top: 0px; left: 0px; flex-direction: column; display: flex;">
 	<div>
 		<select id="database" onchange="selectDatabase(this.value)"></select>
@@ -174,7 +180,7 @@
 			<div class="filters pull-left" style="margin-top: 5px;" id="content-filters">
 
 			</div>
-			
+
 			<button id="filter-btn" class="btn btn-mini btn-primary pull-right" onclick="applyFilters()" style="margin: 3px;">
 				<b>Filter</b>
 			</button>
@@ -197,7 +203,7 @@
 		<tr height="40"><td class="status" style="border-bottom: 0px;">
 			<div>
 				Query execution time: <span id="content-query-ms">0</span> ms;
-				Affected rows: <span id="content-affected-rows">0</span>; 
+				Affected rows: <span id="content-affected-rows">0</span>;
 				Result rows: <span id="content-result-rows">0</span>
 			</div>
 		</td></tr>
@@ -231,7 +237,7 @@
 		<tr height="40"><td class="status" style="border-bottom: 0px;">
 			<div>
 				Query execution time: <span id="query-ms">0</span> ms;
-				Affected rows: <span id="affected-rows">0</span>; 
+				Affected rows: <span id="affected-rows">0</span>;
 				Result rows: <span id="result-rows">0</span>
 			</div>
 		</td></tr>

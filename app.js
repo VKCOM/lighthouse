@@ -11,6 +11,8 @@ var
   editor,
   resp_field_types,
   prevent_table_restore,
+  host_password,
+  external_where,
   pending = {};
 
 $(function() {
@@ -23,7 +25,7 @@ $(function() {
   }
 
   if (window.location.hash) {
-    var external_where = parseHash();
+    external_where = parseHash();
   } else {
     db_host = prompt('Host:', 'http://127.0.0.1:8123/');
     if (!db_host) {
@@ -32,6 +34,17 @@ $(function() {
     }
     window.location.hash = db_host;
   }
+
+  if (db_host.indexOf('user=') >= 0 && db_host.indexOf('password=') < 0) {
+    document.getElementById('password_prompt').style.display = '';
+    return;
+  }
+
+  init();
+})
+
+function init() {
+  document.getElementById('password_prompt').style.display = 'none';
 
   registerAltKeys();
 
@@ -45,7 +58,7 @@ $(function() {
   $('#search').bind({keyup: filterTables, mouseup: filterTables});
 
   var last_q = localGetKey('last_query');
-  
+
   var langTools = ace.require("ace/ext/language_tools");
   editor = ace.edit("query");
   editor.session.setMode("ace/mode/clickhouse"); // imported from tabix
@@ -137,7 +150,7 @@ $(function() {
       selectSection(section);
     }
   }
-})
+}
 
 function setContentParams(query) {
   $('#content-params').attr('value', query);
@@ -197,7 +210,7 @@ function localGetKey(key) {
   try {
     return localStorage.getItem(key);
   } catch (e) {
-    console.log(e);    
+    console.log(e);
   }
 
   return '';
@@ -207,7 +220,7 @@ function localSetKey(key, value) {
   try {
     localStorage.setItem(key, value);
   } catch (e) {
-    console.log(e);    
+    console.log(e);
   }
 }
 
@@ -338,7 +351,7 @@ function drawResponse(data, is_content, save_filters) {
           } else {
               return 0;
           }
-        }        
+        }
       }
     }
 
@@ -420,7 +433,7 @@ function getFiltersWhere() {
     if (!field) {
       continue;
     }
-    
+
     if (typ.indexOf('Int') >= 0) {
       filters.push(field + ' ' + op + ' ' + parseInt(value));
     } else {
@@ -443,7 +456,7 @@ function applyFilters(with_sort) {
     if (sort_parts.length > 0) {
       where_part += ' ORDER BY ' + sort_parts.join(', ');
     }
-  }  
+  }
 
   window.location.hash = db_host + '#' + current_database + '#' + current_table + '#' + encodeURIComponent(where_part);
   var q = 'SELECT * FROM ' + current_database + '.' + current_table +
@@ -515,12 +528,16 @@ function query(key, str, callback) {
     params += "&readonly=1"
   }
 
+  if (host_password) {
+    params += "&password=" + encodeURIComponent(host_password);
+  }
+
   var isCreate = (str.indexOf('create table') >= 0 || str.indexOf('CREATE TABLE') >= 0) && str.indexOf('SHOW CREATE TABLE') < 0;
   var isDrop = str.indexOf('DROP TABLE') >= 0 || str.indexOf('drop table') >= 0;
   var isInsert = str.indexOf('INSERT INTO') >= 0 || str.indexOf('insert into') >= 0;
   var isSelect = str.indexOf('SELECT') >= 0 || str.indexOf('select') >= 0;
 
-  xhr.open("POST", db_host + "/?" + params, true)
+  xhr.open("POST", db_host + (db_host.indexOf('/?') >= 0 ? '&' : "/?") + params, true)
   xhr.onreadystatechange = function() {
     if (xhr.readyState === XMLHttpRequest.DONE) {
         if (xhr.status === 200) {
@@ -534,7 +551,7 @@ function query(key, str, callback) {
               res = {data: {err: e}};
             }
           }
-          
+
           var fields = [];
           var types = {};
           var statistics = res.statistics || {};
@@ -656,7 +673,7 @@ function reloadDatabases() {
         default_database = saved_database;
       }
     }
-    
+
     var lst = ['<option value="">Select database...</option>'];
     for (var i = 0; i < data.rows.length; i++) {
       var name = data.rows[i][0];
@@ -696,7 +713,7 @@ function drawTables(tables, first) {
     var className = 'active';
     $('#tables').find('.' + className).removeClass(className);
     $(this.parentNode).addClass(className);
-    
+
     var q = 'SELECT * FROM ' + current_database + "." + name + ' LIMIT 100';
 
     document.getElementById('content-loading').style.visibility = '';
