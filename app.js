@@ -11,6 +11,7 @@ var
   editor,
   resp_field_types,
   prevent_table_restore,
+  basic_user,
   host_password,
   external_where,
   pending = {};
@@ -33,6 +34,14 @@ $(function() {
       return;
     }
     window.location.hash = db_host;
+  }
+
+  if (db_host.indexOf('basic_user=') >= 0) {
+    var regex = /basic_user=([^&]+)/g
+    var match = regex.exec(db_host)
+    basic_user = decodeURIComponent(match[1])
+    document.getElementById('password_prompt').style.display = '';
+    return;
   }
 
   if (db_host.indexOf('user=') >= 0 && db_host.indexOf('password=') < 0) {
@@ -528,7 +537,7 @@ function query(key, str, callback) {
     params += "&readonly=1"
   }
 
-  if (host_password) {
+  if (host_password && !basic_user) {
     params += "&password=" + encodeURIComponent(host_password);
   }
 
@@ -537,7 +546,16 @@ function query(key, str, callback) {
   var isInsert = str.indexOf('INSERT INTO') >= 0 || str.indexOf('insert into') >= 0;
   var isSelect = str.indexOf('SELECT') >= 0 || str.indexOf('select') >= 0;
 
-  xhr.open("POST", db_host + (db_host.indexOf('/?') >= 0 ? '&' : "/?") + params, true)
+  var uri = db_host + (db_host.indexOf('/?') >= 0 ? '&' : "/?") + params;
+
+  if (basic_user) {
+    xhr.open("POST", uri.replace(/basic_user\=([^&]+)/g, ''), true, basic_user, host_password)
+    xhr.withCredentials = true
+  } else {
+    // password is appended to URL
+    xhr.open("POST", uri, true)
+  }
+
   xhr.onreadystatechange = function() {
     if (xhr.readyState === XMLHttpRequest.DONE) {
         if (xhr.status === 200) {
