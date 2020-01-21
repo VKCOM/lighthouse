@@ -376,7 +376,8 @@ function drawResponse(data, is_content, save_filters) {
     rowData: fullRows,
     enableColResize: true,
     enableSorting: true,
-    singleClickEdit: true
+    singleClickEdit: true,
+    suppressFieldDotNotation: true
   };
   var query_res_el = document.querySelector(id_prefix + 'query-result')
   window[grid_key] = new agGrid.Grid(query_res_el, window[grid_options_key]);
