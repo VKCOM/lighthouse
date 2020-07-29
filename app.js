@@ -532,7 +532,7 @@ function query(key, str, callback) {
   var xhr = new XMLHttpRequest();
   pending[key] = xhr;
 
-  var params = "add_http_cors_header=1&log_queries=1&output_format_json_quote_64bit_integers=1&database=" + (current_database || '') + "&result_overflow_mode=throw"
+  var params = "add_http_cors_header=1&log_queries=1&output_format_json_quote_64bit_integers=1" + (current_database ? '&database=' + current_database : '') + "&result_overflow_mode=throw"
 
   if (!window.i_am_mature_developer_and_i_am_responsible_for_my_own_mistakes) {
     params += "&readonly=1"
